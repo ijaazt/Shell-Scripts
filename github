@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+#{{{ MARK:Header
+#**************************************************************
+##### Author: IJAAZ
+##### Date: Mon Feb 18 00:20:22 EST 2019
+##### Purpose: python3 script to
+##### Notes:
+#}}}***********************************************************
+
+import requests, json, argparse
+import github_security
+
+
+def getRepositories(repo_name):
+	url = "https://api.github.com"
+	urlAddition = "/user/repos"
+	request = requests.get(url + urlAddition, auth=github_security.loginInfo())
+	json_contents = request.json()
+#	print(json.dumps(json_contents, indent=4, sort_keys=True))
+	if hasattr(json_contents, "message") is False:
+		for json_object in json_contents:
+			if repo_name is "":
+				print(json_object["ssh_url"])
+			else:
+				if repo_name in json_object["name"]:
+					print(json_object["ssh_url"])
+
+
+def deleteRepository(repoName):
+	url = "https://api.github.com"
+	urlAddition ="/repos/ijaazt/" + repoName
+	request = requests.delete(url + urlAddition, auth=github_security.loginInfo())
+
+
+def addRepository(repoName, description = ""):
+	url = "https://api.github.com/user/repos"
+	myRepo = {
+		"name": repoName,
+		"description": description,
+		"homepage": "https://github.com",
+		"private": False,
+		"has_issues": True,
+		"has_projects": True,
+		"has_wiki": True
+	}
+	request = requests.post(url, json=myRepo, auth=github_security.loginInfo())
+	getRepositories(repoName)
+
+def main():
+	parser = argparse.ArgumentParser(description='Access Github\'s API')
+	parser.add_argument("-c", "--create", help="create repository")
+	parser.add_argument("-s", "--show", help="show all repositories", nargs='?', const="")
+	parser.add_argument("-d", "--delete")
+	args = parser.parse_args()
+	if args.create: 
+		addRepository(args.create)
+	if args.show is not None: 
+		getRepositories(args.show)
+	if args.delete: 
+		deleteRepository(args.delete) 
+main()
